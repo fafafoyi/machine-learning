@@ -16,10 +16,11 @@ train_side, test_side = train_test_split (leds_clean , test_size=0.2, random_sta
 
 sns.set(style="whitegrid")
 
-
 latest_year_data = leds_clean.sort_values(by="Year", ascending=False).drop_duplicates(subset="Country")
 
 top_countries = latest_year_data[["Country", "Life expectancy "]].sort_values(by="Life expectancy ", ascending=False).head(3)
+
+
 
 def simple_linear_regression(feature_name, target_name='Life expectancy '):
     data = train_side[[feature_name, target_name]].dropna()
@@ -95,3 +96,48 @@ model_alcohol = simple_linear_regression('Alcohol')
 errors_gdp = evaluate_model(model_gdp, 'GDP', test_side)
 errors_expenditure = evaluate_model(model_expenditure, 'Total expenditure', test_side)
 errors_alcohol = evaluate_model(model_alcohol, 'Alcohol', test_side)
+
+"""Part2"""
+features = ['Schooling', 'Income composition of resources', 'Polio', 'Adult Mortality']
+target = 'Life expectancy '
+
+train_multi = train_side[features + [target]].dropna()
+test_multi = test_side[features + [target]].dropna()
+
+X_train = train_multi[features]
+y_train = train_multi[target]
+X_test = test_multi[features]
+y_test = test_multi[target]
+
+multi_model = LinearRegression()
+multi_model.fit(X_train, y_train)
+
+print("\n=== Multivariate Regression Coefficients ===")
+for name, coef in zip(features, multi_model.coef_):
+    print(f"{name}: {coef:.4f}")
+print(f"Intercept: {multi_model.intercept_:.4f}")
+
+score = multi_model.score(X_train, y_train)
+print(f"Training R² Score: {score:.4f}")
+
+# Make predictions
+y_pred = multi_model.predict(X_test)
+
+# Error metrics
+errors = y_pred - y_test
+mean_error = errors.mean()
+std_error = errors.std()
+
+print("\n=== Prediction Evaluation on Test Set ===")
+print(f"Average Error: {mean_error:.4f}")
+print(f"Standard Deviation of Error: {std_error:.4f}")
+
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=y_test, y=y_pred, alpha=0.6)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], '--', color='black')
+plt.xlabel('Actual Life Expectancy')
+plt.ylabel('Predicted Life Expectancy')
+plt.title('Actual vs Predicted Life Expectancy (Multivariate)')
+plt.grid(True)
+plt.show()
+
